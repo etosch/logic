@@ -1,0 +1,14 @@
+*~
+*.vo
+*.glob
+*conflicted*
+*#
+.#*
+.DS_Store
+*.log
+.dropbox
+.github
+.texpadtmp*
+Iconr
+*.aux
+*.out

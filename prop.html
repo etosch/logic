@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>prop</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library prop</h1>
+
+<div class="code">
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="var">EqNat</span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="var">List</span>.<br/>
+<span class="id" type="keyword">Require</span> <span class="id" type="keyword">Import</span> <span class="id" type="var">Peano</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+
+
+</div>
+<div class="code">
+<span class="id" type="keyword">Inductive</span> <span class="id" type="var">atomic</span> :=<br/>
+| <span class="id" type="var">A</span> : <span class="id" type="var">nat</span> -&gt; <span class="id" type="var">atomic</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">beq_atomic</span> (<span class="id" type="var">a</span> : <span class="id" type="var">atomic</span>) (<span class="id" type="var">b</span> : <span class="id" type="var">atomic</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">a</span>, <span class="id" type="var">b</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">A</span> <span class="id" type="var">n</span>, <span class="id" type="var">A</span> <span class="id" type="var">m</span> =&gt; <span class="id" type="var">beq_nat</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Inductive</span> <span class="id" type="var">formula</span> :=<br/>
+&nbsp;&nbsp;| <span class="id" type="var">Atom</span> : <span class="id" type="var">atomic</span> -&gt; <span class="id" type="var">formula</span> <br/>
+&nbsp;&nbsp;| <span class="id" type="var">Negation</span> : <span class="id" type="var">formula</span> -&gt; <span class="id" type="var">formula</span><br/>
+&nbsp;&nbsp;| <span class="id" type="var">Disjunction</span> : <span class="id" type="var">formula</span> -&gt; <span class="id" type="var">formula</span> -&gt; <span class="id" type="var">formula</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Fixpoint</span> <span class="id" type="var">beq_formula</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) (<span class="id" type="var">g</span> : <span class="id" type="var">formula</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">f</span>, <span class="id" type="var">g</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Atom</span> <span class="id" type="var">foo</span>, <span class="id" type="var">Atom</span> <span class="id" type="var">bar</span> =&gt; <span class="id" type="var">beq_atomic</span> <span class="id" type="var">foo</span> <span class="id" type="var">bar</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Negation</span> <span class="id" type="var">foo</span>, <span class="id" type="var">Negation</span> <span class="id" type="var">bar</span> =&gt; <span class="id" type="var">beq_formula</span> <span class="id" type="var">foo</span> <span class="id" type="var">bar</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Disjunction</span> <span class="id" type="var">foo</span> <span class="id" type="var">boo</span>, <span class="id" type="var">Disjunction</span> <span class="id" type="var">far</span> <span class="id" type="var">bar</span> =&gt; <span class="id" type="var">andb</span> (<span class="id" type="var">beq_formula</span> <span class="id" type="var">foo</span> <span class="id" type="var">far</span>) (<span class="id" type="var">beq_formula</span> <span class="id" type="var">boo</span> <span class="id" type="var">bar</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">_</span>, <span class="id" type="var">_</span> =&gt; <span class="id" type="var">false</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Fixpoint</span> <span class="id" type="var">get_atoms</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) : <span class="id" type="var">list</span> <span class="id" type="var">atomic</span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">f</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Atom</span> <span class="id" type="var">foo</span> =&gt; <span class="id" type="var">foo</span>::<span class="id" type="var">nil</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Negation</span> <span class="id" type="var">foo</span> =&gt; <span class="id" type="var">get_atoms</span> <span class="id" type="var">foo</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Disjunction</span> <span class="id" type="var">foo</span> <span class="id" type="var">bar</span> =&gt; (<span class="id" type="var">get_atoms</span> <span class="id" type="var">foo</span>) ++ (<span class="id" type="var">get_atoms</span> <span class="id" type="var">bar</span>)<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Fixpoint</span> <span class="id" type="var">subformula</span> (<span class="id" type="var">F</span> : <span class="id" type="var">formula</span>) (<span class="id" type="var">G</span> : <span class="id" type="var">formula</span>) : <span class="id" type="var">bool</span> :=<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">if</span> <span class="id" type="var">beq_formula</span> <span class="id" type="var">F</span> <span class="id" type="var">G</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">then</span> <span class="id" type="var">true</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">else</span> <span class="id" type="keyword">match</span> <span class="id" type="var">G</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Atom</span> <span class="id" type="var">foo</span> =&gt; <span class="id" type="var">false</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Negation</span> <span class="id" type="var">foo</span> =&gt; <span class="id" type="var">subformula</span> <span class="id" type="var">F</span> <span class="id" type="var">foo</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Disjunction</span> <span class="id" type="var">foo</span> <span class="id" type="var">bar</span> =&gt; <span class="id" type="var">orb</span> (<span class="id" type="var">subformula</span> <span class="id" type="var">F</span> <span class="id" type="var">foo</span>) (<span class="id" type="var">subformula</span> <span class="id" type="var">F</span> <span class="id" type="var">bar</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Inductive</span> <span class="id" type="var">subformulaR</span> : <span class="id" type="var">formula</span> -&gt; <span class="id" type="var">formula</span> -&gt; <span class="id" type="keyword">Prop</span> :=<br/>
+| <span class="id" type="var">R_Atom</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">beq_atomic</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span> = <span class="id" type="var">true</span> -&gt; <span class="id" type="var">subformulaR</span> (<span class="id" type="var">Atom</span> <span class="id" type="var">a</span>) (<span class="id" type="var">Atom</span> <span class="id" type="var">b</span>)<br/>
+| <span class="id" type="var">R_Negation</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">f</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">subformulaR</span> <span class="id" type="var">f</span> (<span class="id" type="var">Negation</span> <span class="id" type="var">f</span>)<br/>
+| <span class="id" type="var">R_Disjunction_L</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">f</span> <span class="id" type="var">g</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">subformulaR</span> <span class="id" type="var">f</span> (<span class="id" type="var">Disjunction</span> <span class="id" type="var">f</span> <span class="id" type="var">g</span>)<br/>
+| <span class="id" type="var">R_Disjunction_R</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">f</span> <span class="id" type="var">g</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">subformulaR</span> <span class="id" type="var">g</span> (<span class="id" type="var">Disjunction</span> <span class="id" type="var">f</span> <span class="id" type="var">g</span>).<br/>
+
+<br/>
+<span class="id" type="keyword">Theorem</span> <span class="id" type="var">comp_rel_subformula_eq</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">F</span> <span class="id" type="var">G</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">subformula</span> <span class="id" type="var">F</span> <span class="id" type="var">G</span> = <span class="id" type="var">true</span> &lt;-&gt; <span class="id" type="var">subformulaR</span> <span class="id" type="var">F</span> <span class="id" type="var">G</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>. <span class="id" type="tactic">split</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" type="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">G</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">beq_formula</span> <span class="id" type="var">F</span> (<span class="id" type="var">Atom</span> <span class="id" type="var">a</span>)) <span class="id" type="var">eqn</span>:<span class="id" type="var">foo</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> <span class="id" type="var">F</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">generalize</span> <span class="id" type="var">foo</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">R_Atom</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">IHG</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">generalize</span> <span class="id" type="var">H</span>. <span class="id" type="tactic">apply</span> <span class="id" type="var">R_Negation</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Eval</span> <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">get_atoms</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 3)))).<br/>
+<span class="id" type="keyword">Eval</span> <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">subformula</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 3)))).<br/>
+
+<br/>
+<span class="id" type="keyword">Example</span> <span class="id" type="var">ex1</span>: <span class="id" type="var">subformula</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2))) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 3)) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)))) = <span class="id" type="var">true</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;<span class="id" type="tactic">simpl</span>. <span class="id" type="tactic">reflexivity</span>.<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Example</span> <span class="id" type="var">ex2</span> : <span class="id" type="var">subformulaR</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 3))) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 3))).<br/>
+
+<br/>
+<span class="id" type="keyword">Eval</span> <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">subformula</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2))) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))) (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 3)))).<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">assignment</span> := <span class="id" type="var">list</span> (<span class="id" type="var">atomic</span> * <span class="id" type="var">bool</span>).<br/>
+
+<br/>
+<span class="id" type="keyword">Fixpoint</span> <span class="id" type="var">find_assignment</span> (<span class="id" type="var">a</span> : <span class="id" type="var">atomic</span>) (<span class="id" type="var">assignments</span> : <span class="id" type="var">assignment</span>) : <span class="id" type="var">option</span> <span class="id" type="var">bool</span> :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">assignments</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">nil</span> =&gt; <span class="id" type="var">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" type="var">b</span>, <span class="id" type="var">truth_value</span>)::<span class="id" type="var">tail</span> =&gt; <span class="id" type="keyword">if</span> <span class="id" type="var">beq_atomic</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">then</span> <span class="id" type="var">Some</span> <span class="id" type="var">truth_value</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">else</span> <span class="id" type="var">find_assignment</span> <span class="id" type="var">a</span> <span class="id" type="var">tail</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Fixpoint</span> <span class="id" type="var">eval_formula</span> (<span class="id" type="var">phi</span> : <span class="id" type="var">formula</span>) (<span class="id" type="var">a</span> : <span class="id" type="var">assignment</span>) : <span class="id" type="var">option</span> <span class="id" type="var">bool</span> :=<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">phi</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Atom</span> <span class="id" type="var">foo</span> =&gt; <span class="id" type="var">find_assignment</span> <span class="id" type="var">foo</span> <span class="id" type="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Negation</span> <span class="id" type="var">foo</span> =&gt; <span class="id" type="keyword">match</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">foo</span> <span class="id" type="var">a</span>) <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">None</span> =&gt; <span class="id" type="var">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Some</span> <span class="id" type="var">x</span> =&gt; <span class="id" type="var">Some</span> (<span class="id" type="var">negb</span> <span class="id" type="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Disjunction</span> <span class="id" type="var">foo</span> <span class="id" type="var">bar</span> =&gt; <span class="id" type="keyword">match</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">foo</span> <span class="id" type="var">a</span>) <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">None</span> =&gt; <span class="id" type="var">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Some</span> <span class="id" type="var">x</span> =&gt; <span class="id" type="keyword">match</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">bar</span> <span class="id" type="var">a</span>) <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">None</span> =&gt; <span class="id" type="var">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">Some</span> <span class="id" type="var">y</span> =&gt; <span class="id" type="var">Some</span> (<span class="id" type="var">orb</span> <span class="id" type="var">x</span> <span class="id" type="var">y</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Eval</span> <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">eval_formula</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)))) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((<span class="id" type="var">A</span> 1), <span class="id" type="var">true</span>)::((<span class="id" type="var">A</span> 2), <span class="id" type="var">true</span>)::<span class="id" type="var">nil</span>).<br/>
+<span class="id" type="keyword">Eval</span> <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">eval_formula</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)))) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((<span class="id" type="var">A</span> 1), <span class="id" type="var">true</span>)::((<span class="id" type="var">A</span> 2), <span class="id" type="var">false</span>)::<span class="id" type="var">nil</span>).<br/>
+<span class="id" type="keyword">Eval</span> <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">eval_formula</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1)) (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 2)))) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(((<span class="id" type="var">A</span> 1), <span class="id" type="var">false</span>)::((<span class="id" type="var">A</span> 2), <span class="id" type="var">false</span>)::<span class="id" type="var">nil</span>).<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">suitable1</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) (<span class="id" type="var">a</span> : <span class="id" type="var">assignment</span>) := <span class="id" type="var">eval_formula</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> &lt;&gt; <span class="id" type="var">None</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Fixpoint</span> <span class="id" type="var">suitable2</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) (<span class="id" type="var">a</span> : <span class="id" type="var">assignment</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">match</span> <span class="id" type="var">a</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">nil</span> =&gt; <span class="id" type="var">True</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" type="var">literal</span>, <span class="id" type="var">_</span>)::<span class="id" type="var">tl</span> =&gt; (<span class="id" type="var">In</span> <span class="id" type="var">literal</span> (<span class="id" type="var">get_atoms</span> <span class="id" type="var">f</span>)) /\ (<span class="id" type="var">suitable2</span> <span class="id" type="var">f</span> <span class="id" type="var">tl</span>)<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">models</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) (<span class="id" type="var">a</span> : <span class="id" type="var">assignment</span>) := <span class="id" type="var">eval_formula</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> = <span class="id" type="var">Some</span> <span class="id" type="var">true</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">satisfiable</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) := <span class="id" type="tactic">exists</span> <span class="id" type="var">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">suitable1</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> -&gt; <span class="id" type="var">eval_formula</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> = <span class="id" type="var">Some</span> <span class="id" type="var">true</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">unsatisfiable</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) := <span class="id" type="keyword">forall</span> <span class="id" type="var">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">suitable1</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> -&gt; <span class="id" type="var">eval_formula</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> = <span class="id" type="var">Some</span> <span class="id" type="var">false</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">valid</span> (<span class="id" type="var">f</span> : <span class="id" type="var">formula</span>) := <span class="id" type="keyword">forall</span> <span class="id" type="var">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">suitable1</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> -&gt; <span class="id" type="var">eval_formula</span> <span class="id" type="var">f</span> <span class="id" type="var">a</span> = <span class="id" type="var">Some</span> <span class="id" type="var">true</span>.<br/>
+
+<br/>
+
+<br/>
+
+<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Definition</span> <span class="id" type="var">some_assignments</span> : <span class="id" type="var">assignment</span> := ((<span class="id" type="var">A</span> 1), <span class="id" type="var">false</span>)::((<span class="id" type="var">A</span> 2), <span class="id" type="var">true</span>)::<span class="id" type="var">nil</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Example</span> <span class="id" type="var">suitable_ex</span> : <span class="id" type="var">suitable1</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))) <span class="id" type="var">some_assignments</span>.<br/>
+<span class="id" type="keyword">Proof</span>. <span class="id" type="tactic">compute</span>; <span class="id" type="tactic">intros</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Example</span> <span class="id" type="var">models_ex</span> : <span class="id" type="var">models</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))) <span class="id" type="var">some_assignments</span>.<br/>
+<span class="id" type="keyword">Proof</span>. <span class="id" type="tactic">compute</span>; <span class="id" type="tactic">reflexivity</span>. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Example</span> <span class="id" type="var">sat_ex</span> : <span class="id" type="var">satisfiable</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))).<br/>
+<span class="id" type="keyword">Proof</span>. <span class="id" type="tactic">unfold</span> <span class="id" type="var">satisfiable</span>; <span class="id" type="tactic">exists</span> <span class="id" type="var">some_assignments</span>; <span class="id" type="tactic">compute</span>; <span class="id" type="tactic">reflexivity</span>. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Example</span> <span class="id" type="var">unsat_ex</span> : <span class="id" type="var">unsatisfiable</span> (<span class="id" type="var">Negation</span> (<span class="id" type="var">Disjunction</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1)) (<span class="id" type="var">Negation</span> (<span class="id" type="var">Atom</span> (<span class="id" type="var">A</span> 1))))).<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <span class="id" type="var">unsatisfiable</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <span class="id" type="var">suitable1</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>. <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">find_assignment</span> (<span class="id" type="var">A</span> 1) <span class="id" type="var">a</span>).<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> <span class="id" type="var">b</span>; <span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <span class="id" type="var">not</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">assert</span> (<span class="id" type="var">H1</span> : <span class="id" type="var">False</span> -&gt; <span class="id" type="var">None</span> = <span class="id" type="var">Some</span> <span class="id" type="var">false</span>).<br/>
+&nbsp;&nbsp;+ <span class="id" type="tactic">intros</span>. <span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" type="tactic">apply</span> <span class="id" type="var">H1</span>. <span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>. <span class="id" type="tactic">reflexivity</span>.<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="var">empty_assignment_not_suitable</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">F</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">eval_formula</span> <span class="id" type="var">F</span> <span class="id" type="var">nil</span> = <span class="id" type="var">None</span> -&gt; ~ <span class="id" type="var">suitable1</span> <span class="id" type="var">F</span> <span class="id" type="var">nil</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">F</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">F'</span> <span class="id" type="var">IHF</span>| <span class="id" type="var">F'</span> <span class="id" type="var">IHF</span>];<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">try</span> (<span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">intros</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">not</span>; <span class="id" type="tactic">intros</span>; <span class="id" type="tactic">compute</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H0</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>);<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">try</span> (<span class="id" type="tactic">intros</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">not</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">suitable</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">not</span>; <span class="id" type="tactic">intros</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>).<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span>  <span class="id" type="var">suitable_invariant_negation</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">F</span> <span class="id" type="var">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">suitable1</span> <span class="id" type="var">F</span> <span class="id" type="var">a</span> &lt;-&gt; <span class="id" type="var">suitable1</span> (<span class="id" type="var">Negation</span> <span class="id" type="var">F</span>) <span class="id" type="var">a</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>. <span class="id" type="tactic">split</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" type="tactic">induction</span> <span class="id" type="var">F</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">suitable1</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">not</span>; <span class="id" type="tactic">intros</span>;  <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">find_assignment</span> <span class="id" type="var">a0</span> <span class="id" type="var">a</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">F</span> <span class="id" type="var">a</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">F1</span> <span class="id" type="var">a</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">F2</span> <span class="id" type="var">a</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" type="tactic">induction</span> <span class="id" type="var">F</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">suitable1</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">not</span>; <span class="id" type="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">find_assignment</span> <span class="id" type="var">a0</span> <span class="id" type="var">a</span>) <span class="id" type="var">eqn</span>:<span class="id" type="var">stuff</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">rewrite</span> <span class="id" type="var">stuff</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">F</span> <span class="id" type="var">a</span>) <span class="id" type="var">eqn</span>:<span class="id" type="var">stuff</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">rewrite</span> <span class="id" type="var">stuff</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>. <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">F1</span> <span class="id" type="var">a</span>) <span class="id" type="var">eqn</span>:<span class="id" type="var">stuff1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">eval_formula</span> <span class="id" type="var">F2</span> <span class="id" type="var">a</span>) <span class="id" type="var">eqn</span>:<span class="id" type="var">stuff2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H0</span>.<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="var">atom_eq</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">beq_atomic</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span> = <span class="id" type="var">true</span> -&gt; <span class="id" type="var">a</span> = <span class="id" type="var">b</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">a</span>. <span class="id" type="tactic">destruct</span> <span class="id" type="var">b</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">beq_nat_true_iff</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">rewrite</span> <span class="id" type="var">H1</span>. <span class="id" type="tactic">reflexivity</span>.<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="var">eq_nat_beq</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">n</span> = <span class="id" type="var">m</span> -&gt; <span class="id" type="var">beq_nat</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span> = <span class="id" type="var">true</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>. <span class="id" type="tactic">rewrite</span> <span class="id" type="var">H</span>. <span class="id" type="tactic">symmetry</span>. <span class="id" type="tactic">apply</span> <span class="id" type="var">beq_nat_refl</span>.<br/>
+<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="var">subformula_atomic_reverse</span> : <span class="id" type="keyword">forall</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">subformulaR</span> (<span class="id" type="var">Atom</span> <span class="id" type="var">a</span>) (<span class="id" type="var">Atom</span> <span class="id" type="var">b</span>) -&gt; <span class="id" type="var">beq_atomic</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span> = <span class="id" type="var">true</span>.<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> (<span class="id" type="var">Atom</span> <span class="id" type="var">a</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">generalize</span> <span class="id" type="var">a</span> <span class="id" type="var">b</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">Lemma</span> <span class="id" type="var">subformula_atom_subset</span>: <span class="id" type="keyword">forall</span> <span class="id" type="var">F</span> <span class="id" type="var">G</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">subformulaR</span> <span class="id" type="var">F</span> <span class="id" type="var">G</span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">forall</span> <span class="id" type="var">a</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">In</span> <span class="id" type="var">a</span> (<span class="id" type="var">get_atoms</span> <span class="id" type="var">F</span>) -&gt; <span class="id" type="var">In</span> <span class="id" type="var">a</span> (<span class="id" type="var">get_atoms</span> <span class="id" type="var">G</span>).<br/>
+<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">intros</span>. <span class="id" type="tactic">induction</span> <span class="id" type="var">F</span>; <span class="id" type="tactic">induction</span> <span class="id" type="var">G</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>. <span class="id" type="tactic">left</span>. <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H0</span>. <span class="id" type="tactic">inversion</span> <span class="id" type="var">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="tactic">rewrite</span> &lt;- <span class="id" type="var">H1</span>.<br/>
+
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
