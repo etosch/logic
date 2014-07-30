@@ -39,6 +39,7 @@ Qed.
 Example valid_ex: valid (Disjunction (Atom (A 1)) (Negation (Atom (A 1)))).
 Proof. rewrite -> tautology. apply unsat_ex. Qed.
 
+(* Can't forget to check the Admitted proofs *)
 Theorem suitable_subformula: forall F G a, ((subformula G F) = true) /\ (suitable F a) -> (suitable G a).   
 Admitted.
   
@@ -93,6 +94,7 @@ Proof.
   assert (beq_formula G G=true).
   destruct G. simpl. reflexivity.*)
 
+(* Show that F -> G is valid and F is valid, then G is valid *)
 
 Theorem q21_h1: forall F G, valid(Negation (Disjunction (Negation F) (Negation G))) /\ valid(F) -> valid(G).
 Proof.
@@ -126,9 +128,13 @@ Proof.
     induction G. simpl. destruct (subformula (Atom a0) F). 
     simpl. reflexivity. simpl. 
 
+(* F -> G is satisfiable and F is satisfiable, then G is satisfiable *)
 (* Not true. Can find a counterexample*)
+
 Theorem q22_h1: forall F G, satisfiable(Negation (Disjunction (Negation F) (Negation G))) /\ satisfiable(F) -> satisfiable(G).
 
+
+(* F -> G is valid and F is satisfiable, then G is satisfiable *)
  
 Theorem q23_h1: forall F G, valid(Negation (Disjunction (Negation F) (Negation G))) /\ satisfiable(F) -> satisfiable(G).
 Proof.

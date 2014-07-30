@@ -332,7 +332,9 @@ Definition beq_atomic (a : atomic) (b : atomic) :=
     | A n, A m => beq_nat n m
   end.
 
-Theorem eq_atomic : forall a b : atomic, {a=b} + {a<>b}.
+(* commenting some stuff out so I can use this as library in other files *)
+
+(* Theorem eq_atomic : forall a b : atomic, {a=b} + {a<>b}.
 Proof.
   intros a b.
   induction a as [n].
@@ -354,8 +356,10 @@ Proof.
 
   intros. destruct b as [m]; induction m as [|mm].
   right. unfold not; intros. inversion H.
+
+Admitted. *)
+
 (* stuck -- when this proof is done, we need to end it with "Defined"*)
-Admitted.
     
 
 Inductive formula :=
@@ -396,14 +400,14 @@ Fixpoint count_atoms (a : atomic) (lst : list atomic) :=
                else count_atoms a tl
   end.
 
-Fixpoint get_all_atoms (f : formula) : set atomic :=
+(*Fixpoint get_all_atoms (f : formula) : set atomic :=
   match f with
     | Atom foo => set_add foo empty_set
     | Negation foo => get_all_atoms foo
     | Disjunction foo bar => @set_union atomic (get_all_atoms foo) (get_all_atoms bar)
-  end.
+  end.*)
 
-Definition get_unique_atoms (f : formula) := 
+(* Definition get_unique_atoms (f : formula) := 
   unique_atoms (get_all_atoms f).
 
 let f := fun (a : atomic) (b : boolean) 
@@ -414,11 +418,11 @@ Fixpoint generate_truth_table_rec (a : list atomic) : (list (list (atomic * bool
     | nil => [nil ; nil]
     | h::t => (concat (map (f h true) (generate_truth_table_rec t))
                       (map (f h false) (generate_truth_table_rec t)))
-  end.
+  end. *)
 
-Definition generate_truth_table (f : formula) : list (list (atomic * boolean)) :=
+(* Definition generate_truth_table (f : formula) : list (list (atomic * boolean)) :=
   let atoms = (get_unique_atoms f)
-  in generate_truth_table_rec atoms.
+  in generate_truth_table_rec atoms. *)
   
 
 Fixpoint find_atomic l a :=
@@ -470,7 +474,7 @@ Fixpoint find_assignment (a : atomic) (assignments : assignment) : option bool :
 
 Check @set_union atomic.
 
-Theorem atomic_eq_refl :
+(* Theorem atomic_eq_refl :
   forall x y : atomic, {x=y} + {x<>y}.
 Proof.
   intros.
@@ -482,7 +486,7 @@ Proof.
   right. intro H; inversion H.
   inversion IHn.
   destruct H.
-  right. unfold not. intros. inversion H. apply 
+  right. unfold not. intros. inversion H. apply *)
   
 
 
