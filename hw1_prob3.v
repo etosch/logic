@@ -66,8 +66,9 @@ Lemma suitable_atomic_bidirectional: forall a atm,
   induction atm.
   intros.
   inversion H.
+  apply in2.
   apply H1.
-Qed.  
+Qed.
 
 Lemma atoms_negation_invariant: forall F,
                                   atomicfs F = atomicfs (Negation F).
@@ -87,7 +88,34 @@ Lemma negation_suitable_invariant: forall F a,
 Proof. 
   induction F.
   split; intros.
+  induction a0.
+  inversion H.
+  apply s2.
+Admitted.
 
+Lemma suitable_invariant_under_assignment_aug: forall F a b,
+                                                 suitable_2 F a -> suitable_2 F (b::a).
+Proof. 
+  induction a.
+  intros.
+  inversion H.
+  intros.
+  induction F; intros; simpl.
+  apply s1. 
+  apply suitable_atomic_bidirectional in H.
+  apply H.
+  apply H.
+  apply s2.
+  apply negation_suitable_invariant.
+  apply H.
+  apply H.
+  inversion H.
+  apply s3.
+  split; inversion H2.
+  generalize H5.
+  apply IHF1.
+  generalize H6.
+  apply IHF2.
   
 
 Lemma suitable_assignment_contains_all_atoms: forall F a atm,
@@ -103,22 +131,19 @@ Proof.
   inversion H1. 
   intros.
   simpl in H0.
-  induction a; intros.
+  induction a.
   inversion H.
   generalize H0.  
-
-
-
-  induction a.
+  apply negation_suitable_invariant in H.
+  generalize H.
+  apply IHF.
   intros.
   inversion H.
-  inversion H1.
-  
-  induction F.
-  intros.
-  
-
-
+  simpl in H0.
+  apply in_app_or in H0.
+  inversion H0.
+  generalize H6.
+  inversion H3.
   
 
 Lemma suitable_extract : forall a F atm,
