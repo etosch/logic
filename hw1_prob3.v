@@ -19,6 +19,7 @@ Inductive suitable_2 : formula -> assignment -> Prop :=
          suitable_2 f a -> suitable_2 (Negation f) a -> suitable_2 (Negation f) (b::a)
 | s3 : forall f g a b,
          suitable_2 f a /\ suitable_2 g a -> suitable_2 (Disjunction f g) a -> suitable_2 (Disjunction f g) (b::a).
+
 (*   s1 : forall (a : assignment)  (atm : atomic), *)
 (*          in_assignment atm a -> suitable_2 (Atom atm) a *)
 (* | s2 : forall f a b, *)
@@ -81,7 +82,6 @@ Lemma atoms_disjunction_invariant: forall F G,
 Proof. 
   induction F; destruct G; simpl; reflexivity.
 Qed.
-
 
 Lemma negation_suitable_invariant: forall F a,
                                      suitable_2 F a <-> suitable_2 (Negation F) a.
