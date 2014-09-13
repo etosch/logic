@@ -33,7 +33,7 @@ Section background.
 
   (* This is needed to use ListSet *)
   Definition atomic_eq : forall a b : atomic, {a = b} + {a <> b}.
-    decide equality. 
+    decide equality.
     apply eq_nat_dec.
   Defined.
 
@@ -93,17 +93,15 @@ Section background.
       | Disjunction foo bar => set_union atomic_eq (get_all_atoms_formula foo) (get_all_atoms_formula bar)
     end.
 
+  Fixpoint generate_all_assignments (a : list atomic) : (list (list (atomic * bool))) :=
+    let f := fun atm v assignment => (atm, v)::assignment
+    in match a with
+         | nil => nil::nil
+         | h::t =>  let f' := f h
+                    in (map (f' true) (generate_all_assignments t)) ++ (map (f' false) (generate_all_assignments t))
+    end.
 
-  (* Fixpoint generate_truth_table_rec (a : list atomic) : (list (list (atomic * boolean))) := *)
-  (*   match a with *)
-  (*     | nil => [nil ; nil] *)
-  (*     | h::t => (concat (map (f h true) (generate_truth_table_rec t)) *)
-  (*                       (map (f h false) (generate_truth_table_rec t))) *)
-  (*   end. *)
-  
-  (* Definition generate_truth_table (f : formula) : list (list (atomic * boolean)) :=
-  let atoms = (get_unique_atoms f)
-  in generate_truth_table_rec atoms. *)  
+  Eval simpl in (generate_all_assignments ((A 3)::((A 2)::((A 1)::nil)))).
   
   Definition min (F G : option bool) : option bool :=
     match F, G with 
@@ -147,6 +145,14 @@ Section background.
                                end
     end.
 
+  Inductive form_val := VAL.
+  Definition truth_table_entry := (atomic || form_val)%type.
+
+  Definition generate_truth_table (f : formula) : list (list (atomic * bool)) :=
+  let atoms := (get_all_atoms_formula f)
+  in let assignments := (generate_all_assignments atoms)
+     in map (fun assignment =>  (eval_formula f assignment)::assignment) assignments.
+  
   Definition formula_eq : 
     forall F G a, { eval_formula F a = eval_formula G a } + { eval_formula F a <> eval_formula G a}.
   Proof. 
