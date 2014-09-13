@@ -1,6 +1,7 @@
 Require Import EqNat.
 Require Import List.
 Require Import ListSet.
+Require Import Coq.Bool.BoolEq.
 
 Section background.
 
@@ -56,6 +57,7 @@ Section background.
       | Disjunction foo boo, Disjunction far bar => andb (beq_formula foo far) (beq_formula boo bar)
       | _, _ => false
     end.
+
 
   Inductive eq_formula : formula -> formula -> Prop :=
   | atom_eq : forall a1 a2, a1 = a2 -> eq_formula (Atom a1) (Atom a2)
@@ -145,10 +147,63 @@ Section background.
                                end
     end.
 
+  Definition formula_eq : 
+    forall F G a, { eval_formula F a = eval_formula G a } + { eval_formula F a <> eval_formula G a}.
+  Proof. 
+    decide equality.
+    apply eq_dec.
+
+  Theorem disjunction_commute : forall F G,
+                                  Disjunction F G = Disjunction G F.
+  Proof. 
+    induction F; destruct G.
+    
+    
   (*Definition suitable (f : formula) (a : assignment) := eval_formula f a <> None. *)
   
   Definition suitable (f : formula) (a : assignment) := 
     set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
+
+  Lemma get_all_atoms_negation_invariant : forall F,
+                                             get_all_atoms_formula F = get_all_atoms_formula (Negation F).
+    induction F; simpl; reflexivity.
+  Qed.    
+
+  Lemma suitable_negation_invariant : forall F a,
+                                        suitable F a <-> suitable (Negation F) a.
+    intros. split; unfold suitable; intros. 
+    rewrite <- get_all_atoms_negation_invariant; apply H.
+    rewrite <- get_all_atoms_negation_invariant in H; apply H.
+  Qed.
+
+  Lemma suitable_disjunction_constituants : forall F G a,
+                                              suitable (Disjunction F G) a -> 
+
+  Lemma suitable_disjunction_constituants : forall F G a,
+                                              ~ suitable F a -> ~ suitable (Disjunction F G) a.
+    induction F as [atm |F' IHF'| F1 IHF1 F2 IHF2].
+    unfold not; unfold suitable; simpl.
+    intros.
+    apply H.
+    destruct (set_mem atomic_eq atm (get_all_atoms_assignment a)).
+    compute. reflexivity.
+    compute. 
+
+
+  Lemma empty_assignment_not_suitable : forall F,
+                                          eval_formula F nil = None -> ~ suitable F nil.
+  Proof.
+    induction F as [|F' IHF| F1 IHF1 F2 IHF2]; simpl; intros; try (unfold not); try (unfold suitable); simpl.
+    (* atomic *)
+    compute; intros; inversion H0.
+    (* negation *)
+    destruct (eval_formula F' nil) as [somebool|].
+    inversion H.
+    apply IHF in H. unfold not in H. unfold suitable in H. simpl in H. apply H.
+    (* disjunction *)
+    destruct (eval_formula F1 nil) as [abool|]; destruct (eval_formula F2 nil) as [bbool|].
+    inversion H.
+    apply IHF2 in H.
 
   Definition models (f : formula) (a : assignment) := eval_formula f a = Some true.
   
@@ -165,17 +220,8 @@ Section background.
                           eval_formula F a = b <-> eval_formula G a = b.
                           
 
-  Lemma empty_assignment_not_suitable : forall F,
-                                          eval_formula F nil = None -> ~ suitable F nil.
-  Proof.
-    induction F as [|F' IHF| F' IHF].
-    simpl. intros. unfold not. unfold suitable. compute. intros. inversion H0.
-    simpl. destruct (eval_formula F' nil). intros. inversion H.
-    intros. apply IHF. apply H.
-    simpl. destruct (eval_formula F' nil). 
-    + destruct (eval_formula F1 nil). intros. unfold not. intros.
-      unfold suitable in H0.
-    
+      
+
   Qed.
 
 Lemma  suitable_invariant_negation : forall F a,
