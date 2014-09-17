@@ -226,7 +226,10 @@ Definition assignment : Set := list (atomic * truth_value).
   Definition suitable (f : formula) (a : assignment) := 
     set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
 
-  Lemma atomic_suitable: forall 
+  Theorem suitable_additive: forall f g ays,
+                               suitable f ays /\ subformulaR g f -> suitable g ays.
+  Proof. 
+    
 
   Fixpoint eval_formula (phi : formula) (a : assignment) : (suitable phi a) -> truth_value :=
     match phi with
