@@ -27,7 +27,7 @@ Section background.
     destruct m as [|m'].
     right. intros contra. inversion contra.
     destruct IHn' with (m := m') as [eq | neq].
-    left. apply f_equal. apply eq.
+   left. apply f_equal. apply eq.
     right. intros Heq. inversion Heq as [Heq']. apply neq. apply Heq'.
   Defined.
 
@@ -57,7 +57,6 @@ Section background.
       | Disjunction foo boo, Disjunction far bar => andb (beq_formula foo far) (beq_formula boo bar)
       | _, _ => false
     end.
-
 
   Inductive eq_formula : formula -> formula -> Prop :=
   | atom_eq : forall a1 a2, a1 = a2 -> eq_formula (Atom a1) (Atom a2)
@@ -93,16 +92,6 @@ Section background.
       | Disjunction foo bar => set_union atomic_eq (get_all_atoms_formula foo) (get_all_atoms_formula bar)
     end.
 
-  Fixpoint generate_all_assignments (a : list atomic) : (list (list (atomic * bool))) :=
-    let f := fun atm v assignment => (atm, v)::assignment
-    in match a with
-         | nil => nil::nil
-         | h::t =>  let f' := f h
-                    in (map (f' true) (generate_all_assignments t)) ++ (map (f' false) (generate_all_assignments t))
-    end.
-
-  Eval simpl in (generate_all_assignments ((A 3)::((A 2)::((A 1)::nil)))).
-  
   Definition min (F G : option bool) : option bool :=
     match F, G with 
       | _ , None | None, _ => None
@@ -110,26 +99,136 @@ Section background.
       | _, _ => Some true
     end.
 
-  Definition assignment := list (atomic * bool).
+  Inductive truth_value := 
+  | Top : truth_value
+  | TV : bool -> truth_value
+  | Bot : truth_value.
   
-  Fixpoint find_assignment (a : atomic) (assignments : assignment) : option bool :=
-    match assignments with
-      | nil => None
-      | (b, truth_value)::tail => if beq_atomic a b
-                                  then Some truth_value
-                                  else find_assignment a tail
+Definition assignment : Set := list (atomic * truth_value).
+  
+  Fixpoint generate_all_assignments (a : list atomic) : (list assignment) :=
+    let f := fun atm v assign => (atm, v)::assign
+    in match a with
+         | nil => nil::nil
+         | h::t =>  let f' := f h
+                    in (map (f' (TV true)) (generate_all_assignments t)) 
+                         ++ (map (f' (TV false)) (generate_all_assignments t))
     end.
 
+  Eval simpl in (generate_all_assignments ((A 3)::((A 2)::((A 1)::nil)))).
+
+  Fixpoint in_assignment_bool (a : atomic) (ays : assignment) : bool :=
+    match ays with
+      | nil => false
+      | (h,_)::t => if beq_atomic h a
+                    then true
+                    else in_assignment_bool a t
+    end.
+
+  Fixpoint in_assignment_prop (a : atomic) (ays : assignment) : Prop :=
+    match ays with
+      | nil => False
+      | (h, _)::t => if beq_atomic h a 
+                     then True
+                     else in_assignment_prop a t
+    end.
+
+  Theorem in_assignment_bool_eq_in_assignment_prop : forall a ays, 
+                                                       in_assignment_bool a ays = true <-> in_assignment_prop a ays.
+  Proof.
+    split.
+    (* in_assignment_bool a ays = true -> in_assignment_prop a ays *)
+    induction ays; intros.
+    simpl in H; inversion H.    
+    destruct a0.
+    simpl.
+    remember (beq_atomic a0 a) as hcmp.
+    destruct hcmp.
+    apply I.
+    simpl in H.
+    rewrite <- Heqhcmp in H.
+    generalize H.
+    apply IHays.
+    (* in_assignment_prop a ays -> in_assignment_bool a ays = true *)
+    induction ays; intros.
+    simpl in H; inversion H.
+    destruct a0.
+    simpl.
+    remember (beq_atomic a0 a) as hcmp.
+    destruct hcmp.
+    reflexivity.
+    simpl in H.
+    rewrite <- Heqhcmp in H.
+    generalize H.
+    apply IHays.
+  Qed.
+
+  (* Fixpoint in_assignment (a : atomic) (ays : assignment) : Prop := *)
+  (*   match ays with *)
+  (*     | nil => False *)
+  (*     | (h,_)::t => if beq_atomic h a *)
+  (*               then True *)
+  (*               else in_assignment a t *)
+  (*   end. *)
+
+  (* Lemma in_empty : forall a, in_assignment a nil -> False. *)
+  (*   intros; compute in H; apply H. *)
+  (* Qed. *)
+
+  (* Eval compute in in_empty (A 1). *)
+
+  Fixpoint find_assignment (a : atomic) (ays : assignment) : truth_value :=
+    match ays with 
+      | nil => Bot
+      | (h,tv)::t => if beq_atomic h a
+                     then tv
+                     else find_assignment a t
+    end.
+
+  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : bool := *)
+  (*   match in_assignment a ays return bool with *)
+  (*     | _ => match ays with *)
+  (*              | nil => match False with end *)
+  (*              | (h,tv)::t => if beq_atomic a h  *)
+  (*                             then tv *)
+  (*                             else find_assignment a t *)
+  (*            end *)
+  (*   end. *)
+
+  (* Fixpoint find_assignment (a : atomic) (ays : { x : assignment | in_assignment a x }) : bool := *)
+  (*   (* (sig (fun x => in_assignment a x)) *) *)
+  (*   match ays with *)
+  (*     | exist nil pf => match (in_empty a) pf with end *)
+  (*     | exist ((h, tv)::t) pf  => if beq_atomic a h *)
+  (*                                 then tv *)
+  (*                                 else find_assignment a (exist (in_assignment a) t pf) *)
+  (*   end. *)
+
+  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment a ays -> bool := *)
+  (*   match ays with *)
+  (*     | nil => fun pf => match (in_empty a) pf with end *)
+  (*     | (h, tv)::t => if beq_atomic a h  *)
+  (*                     then fun _ => tv *)
+  (*                     else find_assignment a t *)
+  (*   end. *)
+
+
   Fixpoint get_all_atoms_assignment (a : assignment) : set atomic :=
+    (* assignment is not a set; new assignments shadow others. we only return teh newest *)
     match a with
       | nil => @empty_set atomic
       | (h, _)::t => match find_assignment h t with
-                       | None => set_add atomic_eq h (get_all_atoms_assignment t)
+                       | Bot => set_add atomic_eq h (get_all_atoms_assignment t)
                        | _ =>  get_all_atoms_assignment t
                      end
     end.
+  
+  Definition suitable (f : formula) (a : assignment) := 
+    set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
 
-  Fixpoint eval_formula (phi : formula) (a : assignment) : option bool :=
+  Lemma atomic_suitable: forall 
+
+  Fixpoint eval_formula (phi : formula) (a : assignment) : (suitable phi a) -> truth_value :=
     match phi with
       | Atom foo => find_assignment foo a
       | Negation foo => match (eval_formula foo a) with
@@ -145,13 +244,12 @@ Section background.
                                end
     end.
 
-  Inductive form_val := VAL.
-  Definition truth_table_entry := (atomic || form_val)%type.
+  Definition truth_table_entry := (option bool * assignment)%type.
 
-  Definition generate_truth_table (f : formula) : list (list (atomic * bool)) :=
+  Definition generate_truth_table (f : formula) : list truth_table_entry :=
   let atoms := (get_all_atoms_formula f)
   in let assignments := (generate_all_assignments atoms)
-     in map (fun assignment =>  (eval_formula f assignment)::assignment) assignments.
+     in map (fun assignment =>  ((eval_formula f assignment), assignment)) assignments.
   
   Definition formula_eq : 
     forall F G a, { eval_formula F a = eval_formula G a } + { eval_formula F a <> eval_formula G a}.
@@ -166,9 +264,6 @@ Section background.
     
     
   (*Definition suitable (f : formula) (a : assignment) := eval_formula f a <> None. *)
-  
-  Definition suitable (f : formula) (a : assignment) := 
-    set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
 
   Lemma get_all_atoms_negation_invariant : forall F,
                                              get_all_atoms_formula F = get_all_atoms_formula (Negation F).
