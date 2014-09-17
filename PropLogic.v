@@ -99,12 +99,15 @@ Section background.
       | _, _ => Some true
     end.
 
+  (* This doesn't solve the problem we had before with defining things in terms of option types.
+     It just temporarily commutes the problem. We will need to get dependent types working in order
+     to really prove things in a way that looks like "informal" proofs. *)
   Inductive truth_value := 
   | Top : truth_value
   | TV : bool -> truth_value
   | Bot : truth_value.
   
-Definition assignment : Set := list (atomic * truth_value).
+  Definition assignment : Set := list (atomic * truth_value).
   
   Fixpoint generate_all_assignments (a : list atomic) : (list assignment) :=
     let f := fun atm v assign => (atm, v)::assign
@@ -226,45 +229,61 @@ Definition assignment : Set := list (atomic * truth_value).
   Definition suitable (f : formula) (a : assignment) := 
     set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
 
-  Theorem suitable_additive: forall f g ays,
-                               suitable f ays /\ subformulaR g f -> suitable g ays.
-  Proof. 
-    
-
-  Fixpoint eval_formula (phi : formula) (a : assignment) : (suitable phi a) -> truth_value :=
+  Fixpoint eval_formula (phi : formula) (a : assignment) : truth_value :=
     match phi with
       | Atom foo => find_assignment foo a
       | Negation foo => match (eval_formula foo a) with
-                          | None => None
-                          | Some x => Some (negb x)
+                          | TV x => TV (negb x)
+                          | _ => Bot
+
                         end
       | Disjunction foo bar => match (eval_formula foo a) with
-                                 | None => None
-                                 | Some x => match (eval_formula bar a) with
-                                               | None => None
-                                               | Some y => Some (orb x y)
+                                 | TV x => match (eval_formula bar a) with
+                                               | TV y => TV (orb x y)
+                                               | _ => Bot
                                              end
+                                 | _ => Bot
                                end
     end.
 
-  Definition truth_table_entry := (option bool * assignment)%type.
+  Definition truth_table_entry := (truth_value * assignment)%type.
 
   Definition generate_truth_table (f : formula) : list truth_table_entry :=
   let atoms := (get_all_atoms_formula f)
   in let assignments := (generate_all_assignments atoms)
      in map (fun assignment =>  ((eval_formula f assignment), assignment)) assignments.
   
-  Definition formula_eq : 
-    forall F G a, { eval_formula F a = eval_formula G a } + { eval_formula F a <> eval_formula G a}.
-  Proof. 
+  Definition formula_eq : forall F G a, 
+                            { eval_formula F a = eval_formula G a } + { eval_formula F a <> eval_formula G a}.
     decide equality.
-    apply eq_dec.
+    apply eq_dec with (beq:=fun a b => (orb (andb a b) (andb (negb a) (negb b)))).
+    intros. destruct x. simpl. reflexivity.
+    simpl. reflexivity.
+    destruct x; destruct y; simpl; try (intros; reflexivity); try (intros; inversion H).
+  Defined.
+
+  Lemma assignment_atomic_eq : forall a1 a2 ays,
+                                 find_assignment a1 ays = find_assignment a2 ays -> a1 = a2.
+    intros.
+    induction ays; destruct a1; destruct a2.
+    simpl in H.
+
+
+
+  Definition eval_formula_eq : forall F G a,
+                                 eval_formula F a = eval_formula G a -> F = G.
+    induction F; destruct G; intros.
+    simpl in H.
+    unfold find_assignment in H.
+    
+
+
 
   Theorem disjunction_commute : forall F G,
                                   Disjunction F G = Disjunction G F.
   Proof. 
     induction F; destruct G.
-    
+    apply formula_eq.
     
   (*Definition suitable (f : formula) (a : assignment) := eval_formula f a <> None. *)
 
