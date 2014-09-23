@@ -102,23 +102,27 @@ Section background.
   (* This doesn't solve the problem we had before with defining things in terms of option types.
      It just temporarily commutes the problem. We will need to get dependent types working in order
      to really prove things in a way that looks like "informal" proofs. *)
-  Inductive truth_value := 
-  | Top : truth_value
-  | TV : bool -> truth_value
-  | Bot : truth_value.
+  (* Inductive truth_value := *)
+  (* | Top : True -> truth_value *)
+  (* | TV : bool -> truth_value *)
+  (* | Bot : False -> truth_value. *)
   
-  Definition assignment : Set := list (atomic * truth_value).
+  Definition assignment : Set := list (atomic * bool).
   
   Fixpoint generate_all_assignments (a : list atomic) : (list assignment) :=
     let f := fun atm v assign => (atm, v)::assign
     in match a with
          | nil => nil::nil
          | h::t =>  let f' := f h
-                    in (map (f' (TV true)) (generate_all_assignments t)) 
-                         ++ (map (f' (TV false)) (generate_all_assignments t))
+                    in (map (f' true) (generate_all_assignments t)) 
+                         ++ (map (f' false) (generate_all_assignments t))
     end.
 
   Eval simpl in (generate_all_assignments ((A 3)::((A 2)::((A 1)::nil)))).
+
+  (* Inductive in_assignment (a : atomic) : assignment -> Prop := *)
+  (*   | asgn_found : forall h tv ays ays', *)
+  (*                    h = a -> in_assignment a (ays'++(h,tv)::ays). *)
 
   Fixpoint in_assignment_bool (a : atomic) (ays : assignment) : bool :=
     match ays with
@@ -174,11 +178,105 @@ Section background.
   (*               else in_assignment a t *)
   (*   end. *)
 
-  (* Lemma in_empty : forall a, in_assignment a nil -> False. *)
-  (*   intros; compute in H; apply H. *)
-  (* Qed. *)
+  Definition in_empty : forall a, in_assignment_prop a nil -> False.
+    intros.
+    inversion H.
+  Qed.
 
-  (* Eval compute in in_empty (A 1). *)
+  Lemma index_atomic_equal : forall n m,
+                               n = m -> A n = A m.
+    intros. rewrite H. reflexivity.
+  Qed.
+
+  Lemma beq_atomic_true : forall a,
+                            beq_atomic a a = true.
+    destruct a.
+    simpl. apply beq_nat_true_iff. reflexivity.
+  Qed.
+
+  Lemma eq_beq_atomic_true : forall a b,
+                               a = b -> beq_atomic a b = true.
+    intros.
+    rewrite H. apply beq_atomic_true.
+  Qed.                          
+
+  Lemma atomic_index_equal : forall n m,
+                               A n = A m -> n = m.
+    intros; induction n; remember m; destruct m as [|foo].
+    rewrite Heqn.
+    reflexivity.
+    apply eq_beq_atomic_true in H. 
+    simpl in H.
+    rewrite Heqn in H.
+    inversion H.
+    rewrite Heqn0.
+    rewrite Heqn0 in H.
+    rewrite Heqn0 in IHn.
+    
+
+  Lemma in_assignment_head_or_tail: forall a t h tv,
+                                      in_assignment_prop a ((h,tv)::t) ->
+                                      a = h \/ in_assignment_prop a t.
+    intros.
+    unfold in_assignment_prop in H.
+    remember (beq_atomic h a).
+    destruct b.
+    destruct a; destruct h.
+    simpl in Heqb.
+    left.
+
+
+
+
+  Lemma in_assignment_additive: forall a t h tv,
+                                    in_assignment_prop a t -> in_assignment_prop a ((h, tv)::t).
+    induction t.
+    intros.
+    inversion H.
+    intros.
+    
+
+  Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment_prop a ays -> bool :=
+    match ays with
+      | nil => fun pf => match (in_empty a) pf with end
+      | (h,tv)::t => if beq_atomic a h
+                     then fun _ => tv
+                     else find_assignment a t
+    end.
+
+  Definition get_first_atom_in_assignment (ays : assignment) :=
+    match ays with
+      | nil => None
+      | (h,_)::t => Some h
+    end.
+
+  Lemma in_assignment_head_or_rest : forall a b ays,
+                                       in_assignment a ays ->
+                                       get_first_atom_in_assignment ays = Some a 
+                                       \/ in_assignment a (b::ays).
+    intros.
+    
+    
+
+
+  Lemma in_assignment_additive : forall a h ays,
+                                   in_assignment a ays -> in_assignment a (h::ays).
+    induction ays.
+    intros.
+    apply in_empty in H.
+    inversion H.
+    intros.
+    
+    
+
+  Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment a ays -> bool :=
+    match ays with
+      | nil => fun pf => match (in_empty a) pf with end
+      | (h, tv)::t => if beq_atomic a h
+                      then fun _ => tv
+                      else (fun _ => find_assignment a t) (find_assignment a ays)
+    end.
+                              
 
   Fixpoint find_assignment (a : atomic) (ays : assignment) : truth_value :=
     match ays with 
@@ -188,15 +286,6 @@ Section background.
                      else find_assignment a t
     end.
 
-  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : bool := *)
-  (*   match in_assignment a ays return bool with *)
-  (*     | _ => match ays with *)
-  (*              | nil => match False with end *)
-  (*              | (h,tv)::t => if beq_atomic a h  *)
-  (*                             then tv *)
-  (*                             else find_assignment a t *)
-  (*            end *)
-  (*   end. *)
 
   (* Fixpoint find_assignment (a : atomic) (ays : { x : assignment | in_assignment a x }) : bool := *)
   (*   (* (sig (fun x => in_assignment a x)) *) *)
@@ -207,13 +296,6 @@ Section background.
   (*                                 else find_assignment a (exist (in_assignment a) t pf) *)
   (*   end. *)
 
-  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment a ays -> bool := *)
-  (*   match ays with *)
-  (*     | nil => fun pf => match (in_empty a) pf with end *)
-  (*     | (h, tv)::t => if beq_atomic a h  *)
-  (*                     then fun _ => tv *)
-  (*                     else find_assignment a t *)
-  (*   end. *)
 
 
   Fixpoint get_all_atoms_assignment (a : assignment) : set atomic :=
