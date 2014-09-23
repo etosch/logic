@@ -200,49 +200,52 @@ Section background.
     rewrite H. apply beq_atomic_true.
   Qed.                          
 
-  Lemma atomic_index_equal : forall n m,
-                               A n = A m -> n = m.
-    intros; induction n; remember m; destruct m as [|foo].
-    rewrite Heqn.
-    reflexivity.
-    apply eq_beq_atomic_true in H. 
-    simpl in H.
-    rewrite Heqn in H.
-    inversion H.
-    rewrite Heqn0.
-    rewrite Heqn0 in H.
-    rewrite Heqn0 in IHn.
+  (* Lemma atomic_index_equal : forall n m, *)
+  (*                              A n = A m -> n = m. *)
+  (*   intros; induction n; remember m; destruct m as [|foo]. *)
+  (*   rewrite Heqn. *)
+  (*   reflexivity. *)
+  (*   apply eq_beq_atomic_true in H.  *)
+  (*   simpl in H. *)
+  (*   rewrite Heqn in H. *)
+  (*   inversion H. *)
+  (*   rewrite Heqn0. *)
+  (*   rewrite Heqn0 in H. *)
+  (*   rewrite Heqn0 in IHn. *)
     
 
-  Lemma in_assignment_head_or_tail: forall a t h tv,
-                                      in_assignment_prop a ((h,tv)::t) ->
-                                      a = h \/ in_assignment_prop a t.
-    intros.
-    unfold in_assignment_prop in H.
-    remember (beq_atomic h a).
-    destruct b.
-    destruct a; destruct h.
-    simpl in Heqb.
-    left.
+  (* Lemma in_assignment_head_or_tail: forall a t h tv, *)
+  (*                                     in_assignment_prop a ((h,tv)::t) -> *)
+  (*                                     a = h \/ in_assignment_prop a t. *)
+  (*   intros. *)
+  (*   unfold in_assignment_prop in H. *)
+  (*   remember (beq_atomic h a). *)
+  (*   destruct b. *)
+  (*   destruct a; destruct h. *)
+  (*   simpl in Heqb. *)
+  (*   left. *)
 
 
 
 
-  Lemma in_assignment_additive: forall a t h tv,
-                                    in_assignment_prop a t -> in_assignment_prop a ((h, tv)::t).
-    induction t.
-    intros.
-    inversion H.
-    intros.
+  (* Lemma in_assignment_additive: forall a t h tv, *)
+  (*                                   in_assignment_prop a t -> in_assignment_prop a ((h, tv)::t). *)
+  (*   induction t. *)
+  (*   intros. *)
+  (*   inversion H. *)
+  (*   intros. *)
     
-
-  Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment_prop a ays -> bool :=
-    match ays with
-      | nil => fun pf => match (in_empty a) pf with end
-      | (h,tv)::t => if beq_atomic a h
-                     then fun _ => tv
-                     else find_assignment a t
-    end.
+  (* I think what we need here is to somehow provide a proof that 
+     in_assignment_prop a t -> boolin_assignment_prop a t -> bool
+     implies 
+     in_assignment_prop a ((h, tv) :: t) -> bool *)
+  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment_prop a ays -> bool := *)
+  (*   match ays with *)
+  (*     | nil => fun pf => match (in_empty a) pf with end *)
+  (*     | (h,tv)::t => if beq_atomic a h *)
+  (*                    then fun _ => tv *)
+  (*                    else find_assignment a t *)
+  (*   end. *)
 
   Definition get_first_atom_in_assignment (ays : assignment) :=
     match ays with
@@ -250,39 +253,39 @@ Section background.
       | (h,_)::t => Some h
     end.
 
-  Lemma in_assignment_head_or_rest : forall a b ays,
-                                       in_assignment a ays ->
-                                       get_first_atom_in_assignment ays = Some a 
-                                       \/ in_assignment a (b::ays).
-    intros.
+  (* Lemma in_assignment_head_or_rest : forall a b ays, *)
+  (*                                      in_assignment a ays -> *)
+  (*                                      get_first_atom_in_assignment ays = Some a  *)
+  (*                                      \/ in_assignment a (b::ays). *)
+  (*   intros. *)
     
     
 
 
-  Lemma in_assignment_additive : forall a h ays,
-                                   in_assignment a ays -> in_assignment a (h::ays).
-    induction ays.
-    intros.
-    apply in_empty in H.
-    inversion H.
-    intros.
+  (* Lemma in_assignment_additive : forall a h ays, *)
+  (*                                  in_assignment a ays -> in_assignment a (h::ays). *)
+  (*   induction ays. *)
+  (*   intros. *)
+  (*   apply in_empty in H. *)
+  (*   inversion H. *)
+  (*   intros. *)
     
     
 
-  Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment a ays -> bool :=
-    match ays with
-      | nil => fun pf => match (in_empty a) pf with end
-      | (h, tv)::t => if beq_atomic a h
-                      then fun _ => tv
-                      else (fun _ => find_assignment a t) (find_assignment a ays)
-    end.
+  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment a ays -> bool := *)
+  (*   match ays with *)
+  (*     | nil => fun pf => match (in_empty a) pf with end *)
+  (*     | (h, tv)::t => if beq_atomic a h *)
+  (*                     then fun _ => tv *)
+  (*                     else (fun _ => find_assignment a t) (find_assignment a ays) *)
+  (*   end. *)
                               
 
-  Fixpoint find_assignment (a : atomic) (ays : assignment) : truth_value :=
+  Fixpoint find_assignment (a : atomic) (ays : assignment) : option bool :=
     match ays with 
-      | nil => Bot
+      | nil => None
       | (h,tv)::t => if beq_atomic h a
-                     then tv
+                     then Some tv
                      else find_assignment a t
     end.
 
@@ -303,7 +306,7 @@ Section background.
     match a with
       | nil => @empty_set atomic
       | (h, _)::t => match find_assignment h t with
-                       | Bot => set_add atomic_eq h (get_all_atoms_assignment t)
+                       | None => set_add atomic_eq h (get_all_atoms_assignment t)
                        | _ =>  get_all_atoms_assignment t
                      end
     end.
@@ -311,21 +314,20 @@ Section background.
   Definition suitable (f : formula) (a : assignment) := 
     set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
 
-  Fixpoint eval_formula (phi : formula) (a : assignment) : truth_value :=
-    match phi with
-      | Atom foo => find_assignment foo a
-      | Negation foo => match (eval_formula foo a) with
-                          | TV x => TV (negb x)
-                          | _ => Bot
+  (* this thing is totally wrong; will think about it more later *)
+  (* Definition none_found : forall a ays, find_assignment (Atom a) ays = None -> False. *)
+  (*   (* we need something like this to be able to run eval_formula using dependent types*) *)
+  (* Admitted. *)
 
-                        end
-      | Disjunction foo bar => match (eval_formula foo a) with
-                                 | TV x => match (eval_formula bar a) with
-                                               | TV y => TV (orb x y)
-                                               | _ => Bot
-                                             end
-                                 | _ => Bot
-                               end
+  (* in progress *)
+  Fixpoint eval_formula (phi : formula) (a : assignment) : suitable phi a -> bool :=
+    match phi return suitable phi a -> bool with
+      | Atom foo => match find_assignment foo a with
+                      | None => fun pf => match (none_found foo a) pf with end
+                      | Some b => fun _ => b
+                    end
+      | Negation foo => eval_formula foo a
+      | Disjunction foo bar => orb (eval_formula foo a) (eval_formula bar a)
     end.
 
   Definition truth_table_entry := (truth_value * assignment)%type.

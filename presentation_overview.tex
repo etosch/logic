@@ -30,7 +30,9 @@ We found two issues with this approach. The first problem was that our proofs in
 
 Since we were getting stuck due to the ``computational'' nature of \verb|eval_formula|, we next tried to define it in an inductive, ``relational'' way. \Todo[Fix]{put this in a better way that will make neil happy}. The goal was to define suitability as something that could be built from existing knowledge of suitability. The problem we ran into was that we needed to define suitability both in terms of the assignment and the formula. We could not simply have statements such as \verb|forall phi a, suitable phi a -> suitable (Negation phi) a| or \verb|forall phi a (h : atomic * bool), suitable phi a -> auitable phi (h::a)|. We tried combining both inductive statements, as well as proving that such properties hold in one definition or the other. However, we'd once again get stuck.
 
-Our next attempt at defining suitability returned to the ``computational'' definition, but did not rely on \verb|eval_formula|. We defined an assignment as suitable for a formula when the set of atoms in the formula are a subset of the set of atoms in the assignment. We attempt to define suitability this way much earlier, but lacked sufficient understanding of Coq to know how to use things like the Set library. 
+Our next attempt at defining suitability returned to the ``computational'' definition, but did not rely on \verb|eval_formula|. We defined an assignment as suitable for a formula when the set of atoms in the formula are a subset of the set of atoms in the assignment. We attempt to define suitability this way much earlier, but lacked sufficient understanding of Coq to know how to use things like the Set library. After gaining sufficient expertise, we we able to define suitability this way. 
+
+Having this new definition for suitability meant 
 
 
 
