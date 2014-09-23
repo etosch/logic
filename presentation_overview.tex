@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{fullpage}
+\usepackage{todo}
 \begin{document}
 \section{Topic}
 Automated, interactive theorem provers such as Coq connect applied concepts in computer science to the theory behind them. Although students often hear that logic is foundational to computer science, they rarely have the opportunity to appreciate the connections between logic and applied computer science in an introductory logic class. 
@@ -20,5 +21,18 @@ An example of a formula is \verb|Disjunction (Atom (A 1)) (Negation (Atom (A 2))
 
 \section{Missing Pieces}
 \section{Difficulties}
+The main challenge in Coq has been to choose the right definitions in our system so that we have sufficient pieces of evidence to build an argument of correctness. If we fail to define a concept in the right way, we could find ourselves stuck in a proof. 
+
+One example where this has happened, which we have not yet been able to resolve, has been in the definition of suitability. In our first pass, we defined using \verb|eval_formula|. \verb|eval_formula| was a function that took a formula ($\varphi$) and an assignment ($\mathcal{A}$) as arguments and returned an \verb|Option| type parameterized by booleans. If the assignment was suitable for $\phi$, \verb|eval_formula| would return the result of $\mathcal{A}(\varphi)$ as a boolean option. Suitability was defined as follows:
+\\
+\verb| Definition suitable (f : formula) (a : assignment) := eval_formula f a <> None.|\\
+We found two issues with this approach. The first problem was that our proofs involving suitability had a lot of cruft in them. For any non-trivial proof using induction, we would need to consider the case where \verb|eval_formula| returned \verb|None|. The second problem appeared later, when we tried to prove lemmas about formulae on our way to proving homework problems. We found that many inductive proofs over \verb|eval_formula| would get ``stuck'' because the we couldn't use structural information we knew about evaluation in order to complete the proof. We tried proving auxiliary lemmas to get around this problem, hoping that they would provide sufficient rewrite rules and evidence to make progress. They did not.
+
+Since we were getting stuck due to the ``computational'' nature of \verb|eval_formula|, we next tried to define it in an inductive, ``relational'' way. \Todo[Fix]{put this in a better way that will make neil happy}. The goal was to define suitability as something that could be built from existing knowledge of suitability. The problem we ran into was that we needed to define suitability both in terms of the assignment and the formula. We could not simply have statements such as \verb|forall phi a, suitable phi a -> suitable (Negation phi) a| or \verb|forall phi a (h : atomic * bool), suitable phi a -> auitable phi (h::a)|. We tried combining both inductive statements, as well as proving that such properties hold in one definition or the other. However, we'd once again get stuck.
+
+Our next attempt at defining suitability returned to the ``computational'' definition, but did not rely on \verb|eval_formula|. We defined an assignment as suitable for a formula when the set of atoms in the formula are a subset of the set of atoms in the assignment. We attempt to define suitability this way much earlier, but lacked sufficient understanding of Coq to know how to use things like the Set library. 
+
+
+
 \section{What we learned}
 \end{document}
