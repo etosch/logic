@@ -228,24 +228,23 @@ Section background.
 
 
 
-  (* Lemma in_assignment_additive: forall a t h tv, *)
-  (*                                   in_assignment_prop a t -> in_assignment_prop a ((h, tv)::t). *)
-  (*   induction t. *)
-  (*   intros. *)
-  (*   inversion H. *)
-  (*   intros. *)
-    
+  Lemma in_assignment_additive: forall a t h P,
+                                  in_assignment_prop a t -> P -> (in_assignment_prop a (h::t) -> P).
+    (* need to prive in_assignment_head_or_tail first *)
+  Admitted.
+
+
   (* I think what we need here is to somehow provide a proof that 
      in_assignment_prop a t -> boolin_assignment_prop a t -> bool
      implies 
      in_assignment_prop a ((h, tv) :: t) -> bool *)
-  (* Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment_prop a ays -> bool := *)
-  (*   match ays with *)
-  (*     | nil => fun pf => match (in_empty a) pf with end *)
-  (*     | (h,tv)::t => if beq_atomic a h *)
-  (*                    then fun _ => tv *)
-  (*                    else find_assignment a t *)
-  (*   end. *)
+  Fixpoint find_assignment (a : atomic) (ays : assignment) : in_assignment_prop a ays -> bool :=
+    match ays with
+      | nil => fun pf => match (in_empty a) pf with end
+      | (h,tv)::t => if beq_atomic a h
+                     then fun _ => tv
+                     else in_assignment_additive a t (h,tv) bool (find_assignment a t) 
+    end.
 
   Definition get_first_atom_in_assignment (ays : assignment) :=
     match ays with
