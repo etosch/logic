@@ -6,6 +6,8 @@ Require Import Arith.Peano_dec.
 
 Section background.
 
+  (********** Atoms **********)
+
   Inductive atomic :=
   | A : nat -> atomic. 
   
@@ -15,10 +17,13 @@ Section background.
     end.
 
   (* This is needed to use ListSet *)
-  Definition atomic_eq : forall a b : atomic, {a = b} + {a <> b}.
+  Definition atomic_eq : 
+    forall a b : atomic, {a = b} + {a <> b}.
     decide equality.
     apply eq_nat_dec.
   Defined.
+
+  (********** Formulae **********)
 
   Inductive formula :=
   | Atom : atomic -> formula 
@@ -39,34 +44,249 @@ Section background.
     (Disjunction (Negation A) B)
       (at level 60, left associativity).
   Check (Disjunction (Negation (A_[1])) (A_[2])).
-  
-  (* check if they are syntactically equal *)
-  Fixpoint beq_formula (f : formula) (g : formula) :=
-    match f, g with
-      | Atom foo, Atom bar => beq_atomic foo bar
-      | Negation foo, Negation bar => beq_formula foo bar
-      | Disjunction foo boo, Disjunction far bar => andb (beq_formula foo far) (beq_formula boo bar)
-      | _, _ => false
+
+  Fixpoint get_all_atoms_formula (f : formula) : set atomic :=
+    match f with
+      | Atom foo => set_add atomic_eq foo (@empty_set atomic)
+      | Negation foo => get_all_atoms_formula foo
+      | Disjunction foo bar => set_union atomic_eq (get_all_atoms_formula foo) (get_all_atoms_formula bar)
     end.
+
+  Fixpoint in_formula (a : atomic) (f : formula) : Prop :=
+    match f with
+      | Atom atm => match atomic_eq atm a with
+                        | left _ => True
+                        | right _ => False
+                    end
+      | Negation f' => in_formula a f'
+      | Disjunction f' f'' => in_formula a f' \/ in_formula a f''
+    end.
+
+  Theorem in_formula_in_all_atoms:
+    forall f a,
+      In a (get_all_atoms_formula f) <-> in_formula a f.
+  Proof. 
+    split; induction f; simpl; intros; try (inversion H); 
+      try (destruct (atomic_eq a0 a));
+      try (trivial).
+    + unfold not in n.
+      apply n.
+      apply H0.
+    + apply IHf in H.
+      apply H.
+    + left. 
+      apply IHf1.
+      (* need to relate set union and append in H *)
+
+
+      
+  Theorem in_formula_disjunction_commute: 
+    forall a f g, 
+      in_formula a (Disjunction f g) <-> in_formula a (Disjunction g f).
+  Proof. 
+    split; unfold in_formula; intros; induction f; destruct g; fold in_formula; 
+     try (apply or_comm; apply H);
+     try (destruct (atomic_eq a0 a)).
+  Qed.
+
+  Theorem in_formula_disjunction_add:
+    forall a f g,
+      in_formula a f -> in_formula a (Disjunction f g).
+  Proof.
+    intros.
+    simpl.
+    left. 
+    apply H.
+  Qed.
+
+  (********** Assignments & Suitability  **********)
+
+  Definition assignment : Set := list (atomic * bool).
+  
+  Fixpoint generate_all_assignments (a : list atomic) : (list assignment) :=
+    let f := fun atm v assign => (atm, v)::assign in
+    match a with
+         | nil => nil::nil
+         | h::t => let f' := f h
+                   in (map (f' true) (generate_all_assignments t))
+                        ++ (map (f' false) (generate_all_assignments t))
+       end.
+
+  Fixpoint in_assignment (a : atomic) (ays : assignment) : Prop :=
+    match ays with
+      | nil => False
+      | (h,_)::t =>  match atomic_eq a h with
+                       | left _ => True
+                       | right _ => in_assignment a t
+                     end
+    end.
+
+  Definition suitable (f : formula) (ays : assignment) : Prop := 
+    forall a, 
+      in_formula a f -> in_assignment a ays.
+
+  Theorem generated_assignments_are_suitable:
+    forall f ays,
+      In ays (generate_all_assignments (get_all_atoms_formula f)) -> suitable f ays.
+  Proof.
+    unfold suitable; intros; induction ays; destruct f; simpl in H; try (inversion H); simpl. 
+    + inversion H1.
+    + inversion H1; inversion H2.
+    + unfold In in H.
+      unfold generate_all_assignments in H.
+      unfold get_all_atoms_formula in H.
+
+  Theorem suitable_negation_invariant: 
+    forall f ays, 
+      suitable f ays <-> suitable (Negation f) ays.
+  Proof. 
+    split; intros; unfold suitable; unfold suitable in H; intros; apply H; simpl in H0.
+    + apply H0.
+    + simpl; apply H0.
+  Qed.
+
+  Theorem suitable_disjunction_invariant:
+    forall f g ays,
+    suitable (Disjunction f g) ays -> suitable f ays /\ suitable g ays.
+  Proof. 
+    unfold suitable; intros.
+    split.
+    + intros.
+      apply in_formula_disjunction_add with (g:=g) in H0.
+      generalize H0.
+      apply H.
+    + intros.
+      apply in_formula_disjunction_add with (g:=f) in H0.
+      apply in_formula_disjunction_commute in H0.
+      generalize H0.
+      apply H.
+  Qed.
+    
+  Lemma in_empty : forall a, in_assignment a nil -> False.
+    intros; compute in H; apply H.
+  Qed.
+
+  (* Thanks to @arjunguha *)
+  Lemma in_partition : forall (a k : atomic) (tv : bool) (ays : assignment),
+                         in_assignment a ((k,tv)::ays) ->
+                         a <> k ->
+                         in_assignment a ays.
+  Proof with auto using list.
+    intros; induction ays; simpl in H; destruct (atomic_eq a k); try contradiction.
+    simpl. apply H.
+  Qed.
+  
+  Fixpoint find_assignment a (ays : assignment) { struct ays }: in_assignment a ays -> bool.
+  refine (match ays with
+            | nil => _
+            | (h,tv)::t => 
+              match atomic_eq a h with
+                | left eq_proof => fun _ => tv
+                | right neq_proof => fun pf => find_assignment a t (@in_partition a h tv t pf neq_proof)
+              end
+          end).
+  Proof.
+    + intros.
+      apply in_empty in H.
+      inversion H.
+  Qed.
+
+  (********** Truth Tables **********)
+  
+  Definition truth_table_entry := (bool * assignment)%type.
+  
+  (* Truth tables are tied to evaluation *)
+  Fixpoint eval_formula (phi : formula) (ays : assignment) : suitable phi ays -> bool.
+  refine (match phi with
+            | Atom atm => fun _ => find_assignment atm ays _
+            | Negation phi' => fun _ => negb (eval_formula phi' ays _)
+            | Disjunction phi' phi'' => fun _ => orb (eval_formula phi' ays _)
+                                                      (eval_formula phi'' ays _)
+          end).
+  Proof. 
+    intros; unfold suitable in _H; apply _H; simpl.
+    destruct (atomic_eq atm atm); trivial.
+    + unfold not in n; apply n; trivial.
+    + apply suitable_negation_invariant; apply _H.
+    + apply suitable_disjunction_invariant in _H; inversion _H.
+      apply H.
+    + apply suitable_disjunction_invariant in _H; inversion _H.
+      apply H0.
+  Qed.
+
+  Definition generate_truth_table (f : formula) : list truth_table_entry :=
+    let atoms := (get_all_atoms_formula f) in
+    let assignments := (generate_all_assignments atoms) in
+    map (fun assignment =>  
+           let pf := suitable f assignment in
+           ((eval_formula f assignment pf), assignment))
+        assignments.
+
+
+  Fixpoint atoms_equal (f_atoms g_atoms : set atomic) : bool :=
+    match f_atoms, g_atoms with
+      | nil, nil  => true
+      | nil, _ | _, nil => false
+      | h::t, _ => if set_mem atomic_eq h g_atoms
+                   then atoms_equal t (set_remove atomic_eq h g_atoms)
+                   else false
+    end.
+
+  
+ (********** Formula Equality **********)
+  
+  Fixpoint beq_formula (f g : formula) : bool :=
+    let f_atoms := get_all_atoms_formula f in
+    let g_atoms := get_all_atoms_formula g in
+    if atoms_equal f_atoms g_atoms 
+    then     
+      let f_assignments := generate_all_assignments f_atoms in
+      let g_assignments := generate_all_assignments g_atoms in
+      
+    else false.
+
+    
+
+  Definition formula_eq : forall f g : formula, 
+                            {f = g} + {f <> g}.
+    decide equality.
+    apply atomic_eq.
+  Defined.
+
+  (* Later when we have truth tables, we can use those to define another, better  equality function. *)
+
+
+  Theorem disjunction_commute : forall f g, 
+                                  Disjunction f g = Disjunction g f.
+
 
   Inductive eq_formula : formula -> formula -> Prop :=
   | atom_eq : forall a1 a2, a1 = a2 -> eq_formula (Atom a1) (Atom a2)
   | neg_eq : forall f g, eq_formula f g -> eq_formula (Negation f) (Negation g)
   | disj_eq : forall f g h, eq_formula f g -> eq_formula (Disjunction f h) (Disjunction g h).
-  
-  Fixpoint subformula (F : formula) (G : formula) : bool :=
+
+  Proof. 
+    induction f; simpl.
+    destruct g.
+    
+
+
+  Fixpoint bsub_formula (F : formula) (G : formula) : bool :=
     if beq_formula F G
     then true
     else match G with
-           | Atom foo => false
-           | Negation foo => subformula F foo
-           | Disjunction foo bar => orb (subformula F foo) (subformula F bar)
+           | Atom _ => false
+           | Negation foo => bsub_formula F foo
+           | Disjunction foo bar => orb (bsub_formula F foo) (bsub_formula F bar)
          end.
 
-  Inductive subformulaR: formula -> formula -> Prop :=
-  | base_subf : forall f g, eq_formula f g -> subformulaR f g
-  | neg_subf : forall f g, subformulaR f g -> subformulaR f (Negation g)
-  | disj_subf : forall f g h, subformulaR f g -> subformulaR f (Disjunction g h).
+  Inductive sub_formula: formula -> formula -> Prop :=
+  | base_subf : forall f g, eq_formula f g -> sub_formula f g
+  | neg_subf : forall f g, sub_formula f g -> sub_formula f (Negation g)
+  | disj_subf : forall f g h, sub_formula f g -> sub_formula f (Disjunction g h).
+
+  
+
 
   Fixpoint count_atoms (a : atomic) (lst : list atomic) :=
     match lst with
@@ -76,12 +296,6 @@ Section background.
                  else count_atoms a tl
     end.
 
-  Fixpoint get_all_atoms_formula (f : formula) : set atomic :=
-    match f with
-      | Atom foo => set_add atomic_eq foo (@empty_set atomic)
-      | Negation foo => get_all_atoms_formula foo
-      | Disjunction foo bar => set_union atomic_eq (get_all_atoms_formula foo) (get_all_atoms_formula bar)
-    end.
 
   Definition min (F G : option bool) : option bool :=
     match F, G with 
@@ -98,18 +312,6 @@ Section background.
   (* | TV : bool -> truth_value *)
   (* | Bot : False -> truth_value. *)
   
-  Definition assignment : Set := list (atomic * bool).
-  
-  Fixpoint generate_all_assignments (a : list atomic) : (list assignment) :=
-    let f := fun atm v assign => (atm, v)::assign
-    in match a with
-         | nil => nil::nil
-         | h::t =>  let f' := f h
-                    in (map (f' true) (generate_all_assignments t)) 
-                         ++ (map (f' false) (generate_all_assignments t))
-    end.
-
-  Eval simpl in (generate_all_assignments ((A 3)::((A 2)::((A 1)::nil)))).
 
   (* Inductive in_assignment (a : atomic) : assignment -> Prop := *)
   (*   | asgn_found : forall h tv ays ays', *)
@@ -301,8 +503,6 @@ Section background.
                      end
     end.
   
-  Definition suitable (f : formula) (a : assignment) := 
-    set_diff atomic_eq (get_all_atoms_formula f) (get_all_atoms_assignment a) = @empty_set atomic.
 
   (* this thing is totally wrong; will think about it more later *)
   (* Definition none_found : forall a ays, find_assignment (Atom a) ays = None -> False. *)
@@ -310,22 +510,6 @@ Section background.
   (* Admitted. *)
 
   (* in progress *)
-  Fixpoint eval_formula (phi : formula) (a : assignment) : suitable phi a -> bool :=
-    match phi return suitable phi a -> bool with
-      | Atom foo => match find_assignment foo a with
-                      | None => fun pf => match (none_found foo a) pf with end
-                      | Some b => fun _ => b
-                    end
-      | Negation foo => eval_formula foo a
-      | Disjunction foo bar => orb (eval_formula foo a) (eval_formula bar a)
-    end.
-
-  Definition truth_table_entry := (truth_value * assignment)%type.
-
-  Definition generate_truth_table (f : formula) : list truth_table_entry :=
-  let atoms := (get_all_atoms_formula f)
-  in let assignments := (generate_all_assignments atoms)
-     in map (fun assignment =>  ((eval_formula f assignment), assignment)) assignments.
   
   Definition formula_eq : forall F G a, 
                             { eval_formula F a = eval_formula G a } + { eval_formula F a <> eval_formula G a}.
